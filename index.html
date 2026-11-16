@@ -1,208 +1,1225 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ideias Notepad</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ideias Notepad — Mural Inteligente</title>
+    <!-- Tailwind CSS para utilitários de layout responsivo e design moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
-<style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial, sans-serif;
-}
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 
-body{
-    display:flex;
-    height:100vh;
-    background:#f5f5f5;
-}
+    <style>
+        /* Estilos customizados para scrollbars, post-its e animações */
+        :root {
+            --bg-board: #f4f5f7;
+            --dot-color: #d1d5db;
+        }
+        html.dark {
+            --bg-board: #0f172a;
+            --dot-color: #1e293b;
+        }
 
-.sidebar{
-    width:250px;
-    background:#222;
-    color:white;
-    padding:20px;
-}
+        body {
+            background-color: var(--bg-board);
+            background-image: radial-gradient(var(--dot-color) 1.25px, transparent 1.25px);
+            background-size: 24px 24px;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-.sidebar h2{
-    margin-bottom:20px;
-}
+        /* Ocultar barra de rolagem nas abas mobile mantendo funcionalidade */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
 
-.menu-item{
-    padding:12px;
-    margin-bottom:10px;
-    background:#333;
-    border-radius:10px;
-    cursor:pointer;
-}
+        /* Scrollbar discreta dentro dos post-its */
+        .note-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .note-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .note-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 10px;
+        }
 
-.menu-item:hover{
-    background:#444;
-}
+        /* Animação de entrada dos cards */
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.94) translateY(8px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .note-card {
+            animation: popIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .note-card:hover {
+            transform: translateY(-3px);
+        }
 
-.content{
-    flex:1;
-    padding:20px;
-    overflow-y:auto;
-}
-
-.topbar{
-    display:flex;
-    justify-content:space-between;
-    margin-bottom:20px;
-}
-
-button{
-    padding:10px 15px;
-    border:none;
-    border-radius:10px;
-    background:#4CAF50;
-    color:white;
-    cursor:pointer;
-}
-
-.notes{
-    display:flex;
-    gap:15px;
-    flex-wrap:wrap;
-}
-
-.note{
-    width:220px;
-    min-height:180px;
-    background:#fff59d;
-    padding:15px;
-    border-radius:10px;
-    box-shadow:0 4px 8px rgba(0,0,0,.1);
-    position:relative;
-}
-
-.note textarea{
-    width:100%;
-    height:130px;
-    border:none;
-    background:transparent;
-    resize:none;
-    outline:none;
-}
-
-.delete{
-    position:absolute;
-    right:10px;
-    top:10px;
-    cursor:pointer;
-    color:red;
-    font-weight:bold;
-}
-</style>
+        /* Assinatura animada "by Elton Ferreira" */
+        @keyframes shimmerText {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+        .signature-badge {
+            background: linear-gradient(90deg, #6366f1, #ec4899, #8b5cf6, #6366f1);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmerText 5s linear infinite;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .signature-container:hover .signature-heart {
+            transform: scale(1.25) rotate(10deg);
+        }
+    </style>
 </head>
-<body>
+<body class="text-slate-800 dark:text-slate-100 h-screen flex flex-col md:flex-row overflow-hidden select-none">
 
-<div class="sidebar">
-    <h2>📌 Ideias</h2>
+    <!-- ==================== SIDEBAR (DESKTOP / PC) ==================== -->
+    <aside class="hidden md:flex md:w-72 flex-col justify-between bg-white/90 dark:bg-slate-900/95 backdrop-blur-md border-r border-slate-200/80 dark:border-slate-800 p-5 z-20 shadow-sm">
+        <div>
+            <!-- Logo e Alternador de Tema -->
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-amber-400 dark:bg-amber-500 flex items-center justify-center text-slate-900 shadow-sm text-lg font-bold">
+                        📌
+                    </div>
+                    <div>
+                        <h1 class="font-display font-extrabold text-lg tracking-tight leading-none">Ideias Notepad</h1>
+                        <span id="cloudStatusDesktop" class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1 mt-0.5">
+                            ⏳ Conectando...
+                        </span>
+                    </div>
+                </div>
+                <button onclick="toggleTheme()" title="Alternar Tema Claro/Escuro" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 transition">
+                    <span id="themeIconDesktop">🌙</span>
+                </button>
+            </div>
 
-    <div class="menu-item" onclick="changeCategory('ideias')">
-        💡 Ideias
+            <!-- Barra de Pesquisa Desktop -->
+            <div class="relative mb-5">
+                <span class="absolute inset-y-0 left-3 flex items-center text-slate-400 text-sm">🔍</span>
+                <input type="text" id="searchDesktop" oninput="handleSearch(this.value)" placeholder="Buscar nas notas..." 
+                    class="w-full pl-9 pr-8 py-2 text-sm rounded-xl bg-slate-100 dark:bg-slate-800/90 border border-transparent focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-800 outline-none transition placeholder:text-slate-400">
+                <button id="clearSearchDesktop" onclick="clearSearch()" class="hidden absolute inset-y-0 right-2.5 flex items-center text-slate-400 hover:text-slate-600 text-xs font-bold">✕</button>
+            </div>
+
+            <!-- Lista de Categorias Desktop -->
+            <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 px-2">Categorias</div>
+            <nav id="desktopCategories" class="space-y-1.5">
+                <!-- Preenchido via JS -->
+            </nav>
+        </div>
+
+        <!-- Rodapé da Sidebar: Backup + Assinatura -->
+        <div class="pt-4 border-t border-slate-200/70 dark:border-slate-800 space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="exportBackup()" class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition" title="Baixar arquivo JSON com suas notas">
+                    <span>⬇️</span> Exportar
+                </button>
+                <label class="flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition cursor-pointer" title="Restaurar notas de um backup JSON">
+                    <span>⬆️</span> Importar
+                    <input type="file" id="importInputDesktop" accept=".json" onchange="importBackup(event)" class="hidden">
+                </label>
+            </div>
+
+            <!-- Assinatura estilizada -->
+            <div class="signature-container flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-800 text-xs">
+                <span class="text-slate-400 dark:text-slate-500">Criado</span>
+                <span class="signature-badge">by Elton Ferreira</span>
+                <span class="signature-heart inline-block transition-transform duration-300 text-xs">✨</span>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ==================== ÁREA PRINCIPAL ==================== -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+
+        <!-- HEADER MOBILE (Aparece apenas em telas menores que md) -->
+        <header class="md:hidden bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800 px-4 pt-3 pb-2 z-20 shadow-sm">
+            <div class="flex items-center justify-between gap-2 mb-2.5">
+                <div class="flex items-center gap-2">
+                    <span class="w-8 h-8 rounded-xl bg-amber-400 flex items-center justify-center text-slate-900 text-base shadow-sm">📌</span>
+                    <div>
+                        <h1 class="font-display font-extrabold text-base tracking-tight leading-none">Ideias Notepad</h1>
+                        <span id="cloudStatusMobile" class="text-[10px] font-medium text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                            ⏳ Conectando...
+                        </span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-1.5">
+                    <!-- Menu de Backup Rápido Mobile -->
+                    <button onclick="exportBackup()" title="Exportar Backup" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm">⬇️</button>
+                    <label title="Importar Backup" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm cursor-pointer">
+                        ⬆️
+                        <input type="file" accept=".json" onchange="importBackup(event)" class="hidden">
+                    </label>
+                    <button onclick="toggleTheme()" title="Alternar Tema" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-sm">
+                        <span id="themeIconMobile">🌙</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Barra de Busca Mobile -->
+            <div class="relative mb-2.5">
+                <span class="absolute inset-y-0 left-3 flex items-center text-slate-400 text-xs">🔍</span>
+                <input type="text" id="searchMobile" oninput="handleSearch(this.value)" placeholder="Pesquisar em todas as notas..." 
+                    class="w-full pl-8 pr-8 py-1.5 text-sm rounded-xl bg-slate-100 dark:bg-slate-800 outline-none focus:ring-2 focus:ring-indigo-500/40 transition">
+                <button id="clearSearchMobile" onclick="clearSearch()" class="hidden absolute inset-y-0 right-2.5 flex items-center text-slate-400 text-xs font-bold">✕</button>
+            </div>
+
+            <!-- Abas Horizontais Deslizáveis Mobile -->
+            <nav id="mobileCategories" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <!-- Preenchido via JS -->
+            </nav>
+        </header>
+
+        <!-- TOPBAR DESKTOP (Título da Categoria + Botão Novo Post-it) -->
+        <div class="hidden md:flex items-center justify-between px-8 py-5 border-b border-slate-200/50 dark:border-slate-800/60 bg-white/40 dark:bg-slate-900/30 backdrop-blur-xs">
+            <div class="flex items-center gap-3">
+                <h2 id="categoryTitleDesktop" class="font-display text-2xl font-extrabold tracking-tight">💡 Ideias</h2>
+                <span id="categoryBadgeDesktop" class="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-slate-200/80 dark:bg-slate-800 text-slate-600 dark:text-slate-300">0 notas</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <span id="saveStatus" class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5 font-medium">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span> ☁️ Sincronizado na nuvem
+                </span>
+                <button onclick="addNote()" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-semibold text-sm shadow-md shadow-indigo-500/20 transition cursor-pointer">
+                    <span class="text-base leading-none">+</span> Novo Post-it
+                </button>
+            </div>
+        </div>
+
+        <!-- MURAL DE POST-ITS (Área Rolável) -->
+        <main id="notesBoard" class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-28 md:pb-10">
+            <!-- Grid Responsivo de Notas -->
+            <div id="notesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 max-w-7xl mx-auto">
+                <!-- Cards gerados via JS -->
+            </div>
+
+            <!-- Estado Vazio (Quando não há notas) -->
+            <div id="emptyState" class="hidden flex-col items-center justify-center text-center py-16 px-4 max-w-md mx-auto">
+                <div class="w-20 h-20 rounded-3xl bg-amber-100 dark:bg-slate-800 flex items-center justify-center text-4xl mb-4 shadow-inner">
+                    🗒️
+                </div>
+                <h3 id="emptyTitle" class="font-display font-bold text-lg text-slate-700 dark:text-slate-200 mb-1">Nenhuma nota por aqui ainda</h3>
+                <p id="emptySubtitle" class="text-sm text-slate-500 dark:text-slate-400 mb-6">Capture seus pensamentos, listas ou inspirações antes que escapem.</p>
+                <button onclick="addNote()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md transition">
+                    + Criar primeiro Post-it
+                </button>
+            </div>
+
+            <!-- Rodapé Mobile com Assinatura Discreta -->
+            <footer class="md:hidden mt-12 mb-4 flex justify-center">
+                <div class="signature-container inline-flex items-center gap-1.5 py-1.5 px-4 rounded-full bg-white/80 dark:bg-slate-900/80 border border-slate-200/70 dark:border-slate-800 shadow-xs text-xs">
+                    <span class="text-slate-400">Ideias Notepad</span>
+                    <span class="signature-badge">by Elton Ferreira</span>
+                    <span class="signature-heart inline-block transition-transform duration-300">✨</span>
+                </div>
+            </footer>
+        </main>
+
+        <!-- BOTÃO FLUTUANTE MOBILE (FAB) -->
+        <button onclick="addNote()" aria-label="Adicionar novo post-it"
+            class="md:hidden fixed bottom-6 right-5 w-14 h-14 rounded-2xl bg-indigo-600 hover:bg-indigo-700 active:scale-90 text-white shadow-xl shadow-indigo-600/30 flex items-center justify-center text-2xl font-bold z-30 transition">
+            +
+        </button>
+
     </div>
 
-    <div class="menu-item" onclick="changeCategory('tarefas')">
-        ✅ Tarefas
-    </div>
-
-    <div class="menu-item" onclick="changeCategory('projetos')">
-        🚀 Projetos
-    </div>
-
-    <div class="menu-item" onclick="changeCategory('estudos')">
-        📚 Estudos
-    </div>
-
-    <div class="menu-item" onclick="changeCategory('notas')">
-        📝 Notas
-    </div>
-</div>
-
-<div class="content">
-
-    <div class="topbar">
-        <h2 id="titulo">💡 Ideias</h2>
-        <button onclick="addNote()">
-            + Novo Post-it
+    <!-- ==================== TOAST NOTIFICATION (Desfazer exclusão / Avisos) ==================== -->
+    <div id="toast" class="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 z-50 hidden items-center gap-3 px-4 py-3 rounded-2xl bg-slate-900 dark:bg-slate-800 text-white text-sm shadow-2xl border border-slate-700/70 transition-all">
+        <span id="toastMessage">Nota excluída.</span>
+        <button id="toastUndoBtn" onclick="undoDelete()" class="hidden px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 font-bold text-xs hover:bg-amber-300 transition">
+            Desfazer
         </button>
     </div>
 
-    <div id="notes" class="notes"></div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+        import {
+            getFirestore,
+            collection,
+            doc,
+            setDoc,
+            updateDoc,
+            deleteDoc,
+            onSnapshot,
+            writeBatch,
+            enableIndexedDbPersistence
+        } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-</div>
+        /**
+         * CONFIGURAÇÃO DO FIREBASE (Credenciais do Projeto ideias-notpad)
+         */
+        const firebaseConfig = {
+            apiKey: "AIzaSyAtmBVrO6xmXe44RSW3PWssTrFgBTLuTAE",
+            authDomain: "ideias-notpad.firebaseapp.com",
+            projectId: "ideias-notpad",
+            storageBucket: "ideias-notpad.firebasestorage.app",
+            messagingSenderId: "606641923993",
+            appId: "1:606641923993:web:34ee5ce2b0c81f69375508",
+            measurementId: "G-XXD9BWZQRX"
+        };
 
-<script>
+        // Inicializar Firebase & Firestore
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const NOTES_COLLECTION = "postits";
 
-let currentCategory = "ideias";
+        // Habilita cache persistente offline do Firestore (quando suportado pelo navegador)
+        enableIndexedDbPersistence(db).catch((err) => {
+            console.warn("Persistência offline multi-aba ou indisponível:", err.code);
+        });
 
-const data = {
-    ideias: [],
-    tarefas: [],
-    projetos: [],
-    estudos: [],
-    notas: []
-};
+        /**
+         * IDEIAS NOTEPAD PRO - LÓGICA DA APLICAÇÃO (CLOUD + CACHE LOCAL)
+         */
+        const STORAGE_KEY = 'ideias_notepad_v2_data';
+        const MIGRATION_KEY = 'ideias_notepad_firebase_migrated_v1';
+        const THEME_KEY = 'ideias_notepad_theme';
 
-function render(){
-    const container = document.getElementById("notes");
-    container.innerHTML = "";
+        const CATEGORIES = [
+            { id: 'ideias', label: 'Ideias', icon: '💡' },
+            { id: 'tarefas', label: 'Tarefas', icon: '✅' },
+            { id: 'projetos', label: 'Projetos', icon: '🚀' },
+            { id: 'estudos', label: 'Estudos', icon: '📚' },
+            { id: 'notas', label: 'Notas', icon: '📝' }
+        ];
 
-    data[currentCategory].forEach((text,index)=>{
+        const NOTE_COLORS = {
+            yellow: {
+                name: 'Amarelo Clássico',
+                dot: '#facc15',
+                card: 'bg-[#fef9c3] dark:bg-[#423d18] border-[#fde047] dark:border-[#71661d] text-slate-800 dark:text-amber-50'
+            },
+            blue: {
+                name: 'Azul Pastel',
+                dot: '#60a5fa',
+                card: 'bg-[#e0f2fe] dark:bg-[#16344a] border-[#bae6fd] dark:border-[#1e4e70] text-slate-800 dark:text-sky-50'
+            },
+            green: {
+                name: 'Verde Menta',
+                dot: '#34d399',
+                card: 'bg-[#dcfce7] dark:bg-[#143d29] border-[#bbf7d0] dark:border-[#1d5c3d] text-slate-800 dark:text-emerald-50'
+            },
+            pink: {
+                name: 'Rosa Suave',
+                dot: '#f472b6',
+                card: 'bg-[#fce7f3] dark:bg-[#471933] border-[#fbcfe8] dark:border-[#6e244e] text-slate-800 dark:text-pink-50'
+            },
+            purple: {
+                name: 'Lilás',
+                dot: '#a78bfa',
+                card: 'bg-[#f3e8ff] dark:bg-[#311d4d] border-[#e9d5ff] dark:border-[#4b2b78] text-slate-800 dark:text-purple-50'
+            },
+            peach: {
+                name: 'Pêssego',
+                dot: '#fb923c',
+                card: 'bg-[#ffedd5] dark:bg-[#4a2813] border-[#fed7aa] dark:border-[#733c1b] text-slate-800 dark:text-orange-50'
+            }
+        };
 
-        const note = document.createElement("div");
-        note.className = "note";
+        let state = {
+            currentCategory: 'ideias',
+            searchQuery: '',
+            isOnline: navigator.onLine,
+            notes: {
+                ideias: [],
+                tarefas: [],
+                projetos: [],
+                estudos: [],
+                notas: []
+            }
+        };
 
-        note.innerHTML = `
-            <span class="delete" onclick="deleteNote(${index})">×</span>
-            <textarea
-                onchange="updateNote(${index}, this.value)"
-            >${text}</textarea>
-        `;
+        let lastDeleted = null;
+        let toastTimeout = null;
+        let debounceTimers = {}; // Timers por ID de nota para escrita otimizada no Firestore
+        let activeEditingNoteId = null; // Evita sobrescrever o campo enquanto o usuário está digitando nele
+        let initialSnapshotProcessed = false;
 
-        container.appendChild(note);
-    });
-}
+        // ==================== STATUS DE CONEXÃO E SINCRONIZAÇÃO ====================
+        function updateSyncStatus(statusType, customText) {
+            const dStatus = document.getElementById('cloudStatusDesktop');
+            const mStatus = document.getElementById('cloudStatusMobile');
+            const topStatus = document.getElementById('saveStatus');
 
-function addNote(){
-    data[currentCategory].push("");
-    render();
-}
+            let badgeText = customText;
+            let colorClass = 'text-emerald-600 dark:text-emerald-400';
+            let dotClass = 'bg-emerald-500';
 
-function deleteNote(index){
-    data[currentCategory].splice(index,1);
-    render();
-}
+            if (!navigator.onLine || statusType === 'offline') {
+                badgeText = customText || '📴 Modo Offline';
+                colorClass = 'text-amber-600 dark:text-amber-400';
+                dotClass = 'bg-amber-500';
+            } else if (statusType === 'saving') {
+                badgeText = customText || '⏳ Salvando na nuvem...';
+                colorClass = 'text-indigo-600 dark:text-indigo-400';
+                dotClass = 'bg-indigo-500 animate-ping';
+            } else if (statusType === 'error') {
+                badgeText = customText || '⚠️ Erro de permissão/rede';
+                colorClass = 'text-rose-600 dark:text-rose-400';
+                dotClass = 'bg-rose-500';
+            } else {
+                badgeText = customText || '☁️ Sincronizado';
+            }
 
-function updateNote(index,value){
-    data[currentCategory][index]=value;
-}
+            if (dStatus) {
+                dStatus.className = `text-[11px] font-medium flex items-center gap-1 mt-0.5 ${colorClass}`;
+                dStatus.textContent = badgeText;
+            }
+            if (mStatus) {
+                mStatus.className = `text-[10px] font-medium block mt-0.5 ${colorClass}`;
+                mStatus.textContent = badgeText;
+            }
+            if (topStatus) {
+                topStatus.innerHTML = `<span class="w-2 h-2 rounded-full ${dotClass}"></span> ${badgeText}`;
+            }
+        }
 
-function changeCategory(category){
+        window.addEventListener('online', () => {
+            state.isOnline = true;
+            updateSyncStatus('synced', '☁️ Reconectado & Sincronizado');
+        });
 
-    currentCategory = category;
+        window.addEventListener('offline', () => {
+            state.isOnline = false;
+            updateSyncStatus('offline');
+        });
 
-    const names = {
-        ideias:"💡 Ideias",
-        tarefas:"✅ Tarefas",
-        projetos:"🚀 Projetos",
-        estudos:"📚 Estudos",
-        notas:"📝 Notas"
-    };
+        // ==================== INICIALIZAÇÃO ====================
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            loadLocalCache();
+            renderAll();
+            startFirestoreRealtimeSync();
+        });
 
-    document.getElementById("titulo").innerText = names[category];
+        // ==================== TEMA CLARO / ESCURO ====================
+        function initTheme() {
+            const savedTheme = localStorage.getItem(THEME_KEY);
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const isDark = savedTheme ? savedTheme === 'dark' : prefersDark;
+            applyTheme(isDark);
+        }
 
-    render();
-}
+        function toggleTheme() {
+            const isCurrentlyDark = document.documentElement.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        }
 
-render();
+        function applyTheme(isDark) {
+            const html = document.documentElement;
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem(THEME_KEY, 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem(THEME_KEY, 'light');
+            }
+            const icon = isDark ? '☀️' : '🌙';
+            const dIcon = document.getElementById('themeIconDesktop');
+            const mIcon = document.getElementById('themeIconMobile');
+            if (dIcon) dIcon.textContent = icon;
+            if (mIcon) mIcon.textContent = icon;
+        }
 
-</script>
+        // ==================== CACHE LOCAL + MIGRAÇÃO PARA FIRESTORE ====================
+        function loadLocalCache() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    CATEGORIES.forEach(cat => {
+                        state.notes[cat.id] = Array.isArray(parsed[cat.id]) ? parsed[cat.id] : [];
+                    });
+                }
+            } catch (e) {
+                console.error('Erro ao ler cache local:', e);
+            }
+        }
 
+        function saveLocalCache() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(state.notes));
+            } catch (e) {
+                console.warn('Cache local cheio:', e);
+            }
+        }
+
+        async function migrateLocalNotesIfNeeded(cloudIsEmpty) {
+            const alreadyMigrated = localStorage.getItem(MIGRATION_KEY);
+            if (alreadyMigrated) return;
+
+            const raw = localStorage.getItem(STORAGE_KEY);
+            let localNotesToUpload = [];
+
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    CATEGORIES.forEach(cat => {
+                        if (Array.isArray(parsed[cat.id])) {
+                            parsed[cat.id].forEach(n => {
+                                localNotesToUpload.push({
+                                    ...n,
+                                    id: n.id || generateId(),
+                                    category: cat.id,
+                                    createdAt: n.createdAt || Date.now()
+                                });
+                            });
+                        }
+                    });
+                } catch (e) {
+                    console.error('Erro na leitura para migração:', e);
+                }
+            }
+
+            // Se existem notas locais antigas, envia todas em lote para o Firestore
+            if (localNotesToUpload.length > 0) {
+                try {
+                    updateSyncStatus('saving', '☁️ Migrando notas locais...');
+                    const batch = writeBatch(db);
+                    localNotesToUpload.forEach(note => {
+                        const ref = doc(db, NOTES_COLLECTION, note.id);
+                        batch.set(ref, {
+                            title: note.title || '',
+                            body: note.body || '',
+                            color: note.color || 'yellow',
+                            pinned: Boolean(note.pinned),
+                            category: note.category,
+                            updatedAt: note.updatedAt || formatDateTime(new Date()),
+                            createdAt: note.createdAt || Date.now()
+                        }, { merge: true });
+                    });
+                    await batch.commit();
+                    localStorage.setItem(MIGRATION_KEY, 'true');
+                    showToast(`☁️ ${localNotesToUpload.length} nota(s) sincronizada(s) com o Firebase!`, false);
+                } catch (err) {
+                    console.error('Erro ao migrar notas:', err);
+                }
+            } else if (cloudIsEmpty) {
+                // Cria notas de boas-vindas direto no Firestore se o banco estiver totalmente vazio
+                try {
+                    const welcome1 = {
+                        id: generateId(),
+                        category: 'ideias',
+                        title: 'Conectado ao Firebase! ☁️✨',
+                        body: 'Suas notas agora estão sincronizadas em tempo real na nuvem (Firestore).\n\n• Abra no celular ou no PC e veja tudo atualizado instantaneamente\n• Escolha cores pastel nos círculos abaixo\n• Fixe notas importantes com 📌',
+                        color: 'yellow',
+                        pinned: true,
+                        updatedAt: formatDateTime(new Date()),
+                        createdAt: Date.now()
+                    };
+                    const welcome2 = {
+                        id: generateId(),
+                        category: 'ideias',
+                        title: 'Sincronização Híbrida',
+                        body: 'Mesmo se ficar sem internet, você pode continuar criando e editando post-its normalmente. Assim que voltar, tudo sobe para a nuvem!',
+                        color: 'blue',
+                        pinned: false,
+                        updatedAt: formatDateTime(new Date()),
+                        createdAt: Date.now() - 1000
+                    };
+                    await setDoc(doc(db, NOTES_COLLECTION, welcome1.id), welcome1);
+                    await setDoc(doc(db, NOTES_COLLECTION, welcome2.id), welcome2);
+                    localStorage.setItem(MIGRATION_KEY, 'true');
+                } catch (e) {
+                    console.error('Erro ao criar notas iniciais na nuvem:', e);
+                }
+            } else {
+                localStorage.setItem(MIGRATION_KEY, 'true');
+            }
+        }
+
+        // ==================== TEMPO REAL (FIRESTORE ONSNAPSHOT) ====================
+        function startFirestoreRealtimeSync() {
+            const colRef = collection(db, NOTES_COLLECTION);
+
+            onSnapshot(colRef, async (snapshot) => {
+                // Na primeira resposta do servidor, verifica se precisa migrar notas antigas do LocalStorage
+                if (!initialSnapshotProcessed) {
+                    initialSnapshotProcessed = true;
+                    await migrateLocalNotesIfNeeded(snapshot.empty);
+                }
+
+                // Reorganiza as notas recebidas por categoria
+                const freshNotes = {
+                    ideias: [],
+                    tarefas: [],
+                    projetos: [],
+                    estudos: [],
+                    notas: []
+                };
+
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const cat = freshNotes[data.category] ? data.category : 'ideias';
+                    freshNotes[cat].push({
+                        id: docSnap.id,
+                        title: data.title || '',
+                        body: data.body || '',
+                        color: data.color || 'yellow',
+                        pinned: Boolean(data.pinned),
+                        updatedAt: data.updatedAt || '',
+                        createdAt: data.createdAt || 0
+                    });
+                });
+
+                // Ordena por data de criação decrescente dentro de cada categoria
+                CATEGORIES.forEach(cat => {
+                    freshNotes[cat.id].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                });
+
+                state.notes = freshNotes;
+                saveLocalCache();
+
+                // Atualiza status visual (considerando se há escritas pendentes no cache local)
+                if (!navigator.onLine) {
+                    updateSyncStatus('offline');
+                } else if (snapshot.metadata.hasPendingWrites) {
+                    updateSyncStatus('saving', '⏳ Sincronizando...');
+                } else {
+                    updateSyncStatus('synced');
+                }
+
+                renderCategories();
+
+                // Se o usuário estiver digitando ativamente em uma nota, atualiza apenas os outros cards para não perder o cursor
+                if (activeEditingNoteId) {
+                    renderNotesPreservingFocus();
+                } else {
+                    renderNotes();
+                }
+            }, (error) => {
+                console.error("Erro na escuta do Firestore:", error);
+                if (error.code === 'permission-denied') {
+                    updateSyncStatus('error', '⚠️ Verifique regras do Firestore');
+                    showToast('⚠️ Permissão negada no Firestore. Libere a coleção "postits" nas regras.', false);
+                } else {
+                    updateSyncStatus('offline', '📴 Offline (Cache Local)');
+                }
+            });
+        }
+
+        // ==================== UTILITÁRIOS ====================
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+        }
+
+        function formatDateTime(dateObj) {
+            const d = new Date(dateObj);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const mins = String(d.getMinutes()).padStart(2, '0');
+            return `${day}/${month} às ${hours}:${mins}`;
+        }
+
+        function escapeHTML(str) {
+            return (str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        // ==================== RENDERIZAÇÃO DE CATEGORIAS ====================
+        function renderCategories() {
+            const desktopNav = document.getElementById('desktopCategories');
+            const mobileNav = document.getElementById('mobileCategories');
+
+            desktopNav.innerHTML = '';
+            mobileNav.innerHTML = '';
+
+            CATEGORIES.forEach(cat => {
+                const count = state.notes[cat.id].length;
+                const isActive = state.currentCategory === cat.id && !state.searchQuery;
+
+                const dBtn = document.createElement('button');
+                dBtn.onclick = () => selectCategory(cat.id);
+                dBtn.className = `w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer ${
+                    isActive
+                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80'
+                }`;
+                dBtn.innerHTML = `
+                    <span class="flex items-center gap-2.5">
+                        <span class="text-base">${cat.icon}</span>
+                        <span>${cat.label}</span>
+                    </span>
+                    <span class="text-xs px-2 py-0.5 rounded-full font-semibold ${
+                        isActive
+                            ? 'bg-white/20 text-white'
+                            : 'bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                    }">${count}</span>
+                `;
+                desktopNav.appendChild(dBtn);
+
+                const mBtn = document.createElement('button');
+                mBtn.onclick = () => selectCategory(cat.id);
+                mBtn.className = `shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition ${
+                    isActive
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                }`;
+                mBtn.innerHTML = `
+                    <span>${cat.icon}</span>
+                    <span>${cat.label}</span>
+                    <span class="opacity-75 text-[11px]">(${count})</span>
+                `;
+                mobileNav.appendChild(mBtn);
+            });
+
+            const activeCatObj = CATEGORIES.find(c => c.id === state.currentCategory);
+            const titleEl = document.getElementById('categoryTitleDesktop');
+            const badgeEl = document.getElementById('categoryBadgeDesktop');
+
+            if (state.searchQuery.trim()) {
+                titleEl.textContent = `🔍 Resultados para "${state.searchQuery}"`;
+            } else if (activeCatObj) {
+                titleEl.textContent = `${activeCatObj.icon} ${activeCatObj.label}`;
+            }
+
+            const visibleCount = getFilteredNotes().length;
+            badgeEl.textContent = `${visibleCount} ${visibleCount === 1 ? 'nota' : 'notas'}`;
+        }
+
+        // ==================== FILTRAGEM E ORDENAÇÃO ====================
+        function getFilteredNotes() {
+            const query = state.searchQuery.trim().toLowerCase();
+            let list = [];
+
+            if (query) {
+                CATEGORIES.forEach(cat => {
+                    state.notes[cat.id].forEach(note => {
+                        const matchTitle = (note.title || '').toLowerCase().includes(query);
+                        const matchBody = (note.body || '').toLowerCase().includes(query);
+                        if (matchTitle || matchBody) {
+                            list.push({ ...note, _categoryId: cat.id, _categoryLabel: `${cat.icon} ${cat.label}` });
+                        }
+                    });
+                });
+            } else {
+                list = state.notes[state.currentCategory].map(note => ({
+                    ...note,
+                    _categoryId: state.currentCategory
+                }));
+            }
+
+            return list.sort((a, b) => (b.pinned === true) - (a.pinned === true));
+        }
+
+        // ==================== RENDERIZAÇÃO DOS POST-ITS ====================
+        function createNoteCardElement(note) {
+            const colorTheme = NOTE_COLORS[note.color] || NOTE_COLORS.yellow;
+            const catId = note._categoryId;
+
+            const card = document.createElement('article');
+            card.dataset.noteId = note.id;
+            card.className = `note-card flex flex-col justify-between rounded-2xl border p-4 shadow-sm hover:shadow-md min-h-[220px] ${colorTheme.card} ${
+                note.pinned ? 'ring-2 ring-indigo-500/50 dark:ring-indigo-400/50' : ''
+            }`;
+
+            const colorDotsHTML = Object.entries(NOTE_COLORS).map(([key, val]) => `
+                <button type="button" onclick="changeNoteColor('${catId}', '${note.id}', '${key}')" 
+                    title="${val.name}"
+                    style="background-color: ${val.dot}"
+                    class="w-4 h-4 rounded-full border border-black/15 transition-transform hover:scale-125 cursor-pointer ${
+                        note.color === key ? 'ring-2 ring-offset-1 ring-slate-700 dark:ring-white scale-110' : 'opacity-80 hover:opacity-100'
+                    }">
+                </button>
+            `).join('');
+
+            card.innerHTML = `
+                <div class="flex flex-col flex-1">
+                    <div class="flex items-start justify-between gap-2 mb-2">
+                        <input type="text" 
+                            value="${escapeHTML(note.title)}" 
+                            placeholder="Título opcional..."
+                            onfocus="setEditingNote('${note.id}')"
+                            onblur="flushNoteSave('${catId}', '${note.id}')"
+                            oninput="updateNoteField('${catId}', '${note.id}', 'title', this.value)"
+                            class="w-full bg-transparent font-display font-bold text-base outline-none placeholder:text-black/35 dark:placeholder:text-white/35">
+                        
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button type="button" onclick="togglePinNote('${catId}', '${note.id}')" 
+                                title="${note.pinned ? 'Desafixar nota' : 'Fixar no topo'}"
+                                class="p-1.5 rounded-lg transition cursor-pointer ${
+                                    note.pinned 
+                                        ? 'bg-black/10 dark:bg-white/15 opacity-100' 
+                                        : 'opacity-45 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10'
+                                }">
+                                📌
+                            </button>
+                            <button type="button" onclick="deleteNote('${catId}', '${note.id}')" 
+                                title="Excluir nota"
+                                class="p-1.5 rounded-lg opacity-45 hover:opacity-100 hover:bg-red-500/15 hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer text-sm font-bold">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+
+                    ${note._categoryLabel ? `
+                        <div class="mb-2">
+                            <span class="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-black/10 dark:bg-white/10">
+                                ${note._categoryLabel}
+                            </span>
+                        </div>
+                    ` : ''}
+
+                    <textarea 
+                        placeholder="Escreva sua ideia aqui..."
+                        onfocus="setEditingNote('${note.id}')"
+                        onblur="flushNoteSave('${catId}', '${note.id}')"
+                        oninput="updateNoteField('${catId}', '${note.id}', 'body', this.value)"
+                        class="note-scroll w-full flex-1 bg-transparent text-sm leading-relaxed resize-none outline-none min-h-[115px] placeholder:text-black/35 dark:placeholder:text-white/35 select-text">${escapeHTML(note.body)}</textarea>
+                </div>
+
+                <div class="pt-3 mt-2 border-t border-black/10 dark:border-white/10 flex items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5">
+                        ${colorDotsHTML}
+                    </div>
+                    <span class="note-timestamp text-[10px] font-medium opacity-60 whitespace-nowrap">
+                        ${note.updatedAt || ''}
+                    </span>
+                </div>
+            `;
+
+            return card;
+        }
+
+        function renderNotes() {
+            const grid = document.getElementById('notesGrid');
+            const emptyState = document.getElementById('emptyState');
+            const emptyTitle = document.getElementById('emptyTitle');
+            const emptySubtitle = document.getElementById('emptySubtitle');
+
+            const notesToRender = getFilteredNotes();
+            grid.innerHTML = '';
+
+            if (notesToRender.length === 0) {
+                grid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+
+                if (state.searchQuery.trim()) {
+                    emptyTitle.textContent = 'Nenhum resultado encontrado';
+                    emptySubtitle.textContent = `Não encontramos notas contendo "${state.searchQuery}".`;
+                } else {
+                    emptyTitle.textContent = 'Nenhuma nota por aqui ainda';
+                    emptySubtitle.textContent = 'Clique no botão acima para adicionar seu primeiro post-it.';
+                }
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+            grid.classList.remove('hidden');
+
+            notesToRender.forEach(note => {
+                grid.appendChild(createNoteCardElement(note));
+            });
+        }
+
+        function renderNotesPreservingFocus() {
+            const grid = document.getElementById('notesGrid');
+            const notesToRender = getFilteredNotes();
+            const existingCards = new Map();
+
+            grid.querySelectorAll('article[data-note-id]').forEach(el => {
+                existingCards.set(el.dataset.noteId, el);
+            });
+
+            // Remove cards excluídos remotamente (exceto o que está sendo editado)
+            existingCards.forEach((el, id) => {
+                if (id !== activeEditingNoteId && !notesToRender.some(n => n.id === id)) {
+                    el.remove();
+                }
+            });
+
+            // Atualiza ou insere os demais cards sem destruir o elemento focado
+            notesToRender.forEach((note, idx) => {
+                if (note.id === activeEditingNoteId) return;
+                const newEl = createNoteCardElement(note);
+                const oldEl = existingCards.get(note.id);
+                if (oldEl) {
+                    grid.replaceChild(newEl, oldEl);
+                } else {
+                    grid.insertBefore(newEl, grid.children[idx] || null);
+                }
+            });
+        }
+
+        function renderAll() {
+            renderCategories();
+            renderNotes();
+        }
+
+        // ==================== AÇÕES DAS NOTAS (FIRESTORE + CACHE) ====================
+        function selectCategory(categoryId) {
+            state.currentCategory = categoryId;
+            if (state.searchQuery) {
+                clearSearch(false);
+            }
+            renderAll();
+        }
+
+        async function addNote() {
+            if (state.searchQuery) {
+                clearSearch(false);
+            }
+
+            const colorKeys = Object.keys(NOTE_COLORS);
+            const currentList = state.notes[state.currentCategory];
+            const nextColor = colorKeys[currentList.length % colorKeys.length];
+            const nowStr = formatDateTime(new Date());
+            const noteId = generateId();
+
+            const newNote = {
+                id: noteId,
+                category: state.currentCategory,
+                title: '',
+                body: '',
+                color: nextColor,
+                pinned: false,
+                updatedAt: nowStr,
+                createdAt: Date.now()
+            };
+
+            // Atualização otimista imediata na tela e no cache
+            state.notes[state.currentCategory].unshift(newNote);
+            saveLocalCache();
+            renderAll();
+
+            setTimeout(() => {
+                const firstTextarea = document.querySelector('#notesGrid textarea');
+                if (firstTextarea) firstTextarea.focus();
+            }, 50);
+
+            // Salva no Firebase Firestore
+            try {
+                updateSyncStatus('saving');
+                await setDoc(doc(db, NOTES_COLLECTION, noteId), newNote);
+                if (navigator.onLine) updateSyncStatus('synced');
+            } catch (err) {
+                console.error("Erro ao criar nota no Firestore:", err);
+                updateSyncStatus('error');
+            }
+        }
+
+        function setEditingNote(noteId) {
+            activeEditingNoteId = noteId;
+        }
+
+        function updateNoteField(categoryId, noteId, field, value) {
+            const note = state.notes[categoryId]?.find(n => n.id === noteId);
+            if (!note) return;
+
+            note[field] = value;
+            note.updatedAt = formatDateTime(new Date());
+            saveLocalCache();
+
+            // Atualiza visualmente apenas o timestamp do card atual
+            const cardEl = document.querySelector(`article[data-note-id="${noteId}"] .note-timestamp`);
+            if (cardEl) cardEl.textContent = note.updatedAt;
+
+            updateSyncStatus('saving', '⏳ Digitando...');
+
+            // Debounce de 500ms para evitar excesso de escritas no Firestore enquanto digita
+            clearTimeout(debounceTimers[noteId]);
+            debounceTimers[noteId] = setTimeout(() => {
+                persistNoteToFirestore(categoryId, noteId);
+            }, 500);
+        }
+
+        function flushNoteSave(categoryId, noteId) {
+            if (activeEditingNoteId === noteId) {
+                activeEditingNoteId = null;
+            }
+            if (debounceTimers[noteId]) {
+                clearTimeout(debounceTimers[noteId]);
+                delete debounceTimers[noteId];
+                persistNoteToFirestore(categoryId, noteId);
+            }
+        }
+
+        async function persistNoteToFirestore(categoryId, noteId) {
+            const note = state.notes[categoryId]?.find(n => n.id === noteId);
+            if (!note) return;
+
+            try {
+                updateSyncStatus('saving');
+                await setDoc(doc(db, NOTES_COLLECTION, noteId), {
+                    title: note.title || '',
+                    body: note.body || '',
+                    color: note.color || 'yellow',
+                    pinned: Boolean(note.pinned),
+                    category: categoryId,
+                    updatedAt: note.updatedAt || formatDateTime(new Date()),
+                    createdAt: note.createdAt || Date.now()
+                }, { merge: true });
+
+                if (navigator.onLine) updateSyncStatus('synced');
+            } catch (err) {
+                console.error("Erro ao atualizar nota no Firestore:", err);
+                updateSyncStatus('error');
+            }
+        }
+
+        async function changeNoteColor(categoryId, noteId, newColor) {
+            const note = state.notes[categoryId]?.find(n => n.id === noteId);
+            if (!note) return;
+
+            note.color = newColor;
+            note.updatedAt = formatDateTime(new Date());
+            saveLocalCache();
+            renderNotes();
+
+            try {
+                updateSyncStatus('saving');
+                await updateDoc(doc(db, NOTES_COLLECTION, noteId), {
+                    color: newColor,
+                    updatedAt: note.updatedAt
+                });
+                if (navigator.onLine) updateSyncStatus('synced');
+            } catch (err) {
+                console.error("Erro ao mudar cor:", err);
+            }
+        }
+
+        async function togglePinNote(categoryId, noteId) {
+            const note = state.notes[categoryId]?.find(n => n.id === noteId);
+            if (!note) return;
+
+            note.pinned = !note.pinned;
+            saveLocalCache();
+            renderNotes();
+            showToast(note.pinned ? '📌 Nota fixada no topo!' : 'Nota desafixada.', false);
+
+            try {
+                updateSyncStatus('saving');
+                await updateDoc(doc(db, NOTES_COLLECTION, noteId), {
+                    pinned: note.pinned
+                });
+                if (navigator.onLine) updateSyncStatus('synced');
+            } catch (err) {
+                console.error("Erro ao fixar nota:", err);
+            }
+        }
+
+        async function deleteNote(categoryId, noteId) {
+            const list = state.notes[categoryId];
+            const index = list.findIndex(n => n.id === noteId);
+            if (index === -1) return;
+
+            clearTimeout(debounceTimers[noteId]);
+            const [removedNote] = list.splice(index, 1);
+            lastDeleted = { categoryId, note: removedNote, index };
+
+            saveLocalCache();
+            renderAll();
+            showToast('Post-it removido.', true);
+
+            try {
+                updateSyncStatus('saving');
+                await deleteDoc(doc(db, NOTES_COLLECTION, noteId));
+                if (navigator.onLine) updateSyncStatus('synced');
+            } catch (err) {
+                console.error("Erro ao excluir nota no Firestore:", err);
+            }
+        }
+
+        async function undoDelete() {
+            if (!lastDeleted) return;
+            const { categoryId, note, index } = lastDeleted;
+            lastDeleted = null;
+
+            state.notes[categoryId].splice(index, 0, note);
+            saveLocalCache();
+            renderAll();
+            hideToast();
+
+            try {
+                updateSyncStatus('saving');
+                await setDoc(doc(db, NOTES_COLLECTION, note.id), {
+                    ...note,
+                    category: categoryId
+                });
+                if (navigator.onLine) updateSyncStatus('synced');
+            } catch (err) {
+                console.error("Erro ao restaurar nota:", err);
+            }
+        }
+
+        // ==================== BUSCA ====================
+        function handleSearch(val) {
+            state.searchQuery = val;
+
+            const dInput = document.getElementById('searchDesktop');
+            const mInput = document.getElementById('searchMobile');
+            if (dInput && dInput.value !== val) dInput.value = val;
+            if (mInput && mInput.value !== val) mInput.value = val;
+
+            const hasText = val.trim().length > 0;
+            document.getElementById('clearSearchDesktop')?.classList.toggle('hidden', !hasText);
+            document.getElementById('clearSearchMobile')?.classList.toggle('hidden', !hasText);
+
+            renderAll();
+        }
+
+        function clearSearch(shouldRender = true) {
+            state.searchQuery = '';
+            const dInput = document.getElementById('searchDesktop');
+            const mInput = document.getElementById('searchMobile');
+            if (dInput) dInput.value = '';
+            if (mInput) mInput.value = '';
+            document.getElementById('clearSearchDesktop')?.classList.add('hidden');
+            document.getElementById('clearSearchMobile')?.classList.add('hidden');
+            if (shouldRender) renderAll();
+        }
+
+        // ==================== BACKUP (EXPORTAR / IMPORTAR JSON) ====================
+        function exportBackup() {
+            const payload = {
+                app: 'Ideias Notepad',
+                author: 'Elton Ferreira',
+                exportedAt: new Date().toISOString(),
+                notes: state.notes
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const dateStr = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `ideias-notepad-backup-${dateStr}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ Backup exportado com sucesso!', false);
+        }
+
+        function importBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    const importedNotes = parsed.notes || parsed;
+
+                    let notesToUpload = [];
+                    CATEGORIES.forEach(cat => {
+                        if (Array.isArray(importedNotes[cat.id])) {
+                            importedNotes[cat.id].forEach(n => {
+                                notesToUpload.push({
+                                    ...n,
+                                    id: n.id || generateId(),
+                                    category: cat.id,
+                                    createdAt: n.createdAt || Date.now()
+                                });
+                            });
+                        }
+                    });
+
+                    if (notesToUpload.length === 0) throw new Error('Formato inválido ou vazio');
+
+                    updateSyncStatus('saving', '☁️ Enviando backup para nuvem...');
+                    const batch = writeBatch(db);
+                    notesToUpload.forEach(note => {
+                        const ref = doc(db, NOTES_COLLECTION, note.id);
+                        batch.set(ref, {
+                            title: note.title || '',
+                            body: note.body || '',
+                            color: note.color || 'yellow',
+                            pinned: Boolean(note.pinned),
+                            category: note.category,
+                            updatedAt: note.updatedAt || formatDateTime(new Date()),
+                            createdAt: note.createdAt || Date.now()
+                        }, { merge: true });
+                    });
+                    await batch.commit();
+
+                    updateSyncStatus('synced');
+                    showToast(`✅ ${notesToUpload.length} notas importadas para o Firebase!`, false);
+                } catch (err) {
+                    showToast('❌ Arquivo de backup inválido.', false);
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // ==================== NOTIFICAÇÃO TOAST ====================
+        function showToast(message, showUndo = false) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMessage');
+            const undoBtn = document.getElementById('toastUndoBtn');
+
+            msgEl.textContent = message;
+            if (showUndo) {
+                undoBtn.classList.remove('hidden');
+            } else {
+                undoBtn.classList.add('hidden');
+            }
+
+            toast.classList.remove('hidden');
+            toast.classList.add('flex');
+
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                hideToast();
+            }, showUndo ? 5000 : 3000);
+        }
+
+        function hideToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('hidden');
+            toast.classList.remove('flex');
+        }
+
+        // Expõe as funções chamadas via atributos HTML inline (onclick, oninput, onfocus, onblur)
+        Object.assign(window, {
+            toggleTheme,
+            selectCategory,
+            addNote,
+            setEditingNote,
+            updateNoteField,
+            flushNoteSave,
+            changeNoteColor,
+            togglePinNote,
+            deleteNote,
+            undoDelete,
+            handleSearch,
+            clearSearch,
+            exportBackup,
+            importBackup
+        });
+    </script>
 </body>
 </html>
