@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ideias Notepad</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, sans-serif;
+}
+
+body{
+    display:flex;
+    height:100vh;
+    background:#f5f5f5;
+}
+
+.sidebar{
+    width:250px;
+    background:#222;
+    color:white;
+    padding:20px;
+}
+
+.sidebar h2{
+    margin-bottom:20px;
+}
+
+.menu-item{
+    padding:12px;
+    margin-bottom:10px;
+    background:#333;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+.menu-item:hover{
+    background:#444;
+}
+
+.content{
+    flex:1;
+    padding:20px;
+    overflow-y:auto;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:20px;
+}
+
+button{
+    padding:10px 15px;
+    border:none;
+    border-radius:10px;
+    background:#4CAF50;
+    color:white;
+    cursor:pointer;
+}
+
+.notes{
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.note{
+    width:220px;
+    min-height:180px;
+    background:#fff59d;
+    padding:15px;
+    border-radius:10px;
+    box-shadow:0 4px 8px rgba(0,0,0,.1);
+    position:relative;
+}
+
+.note textarea{
+    width:100%;
+    height:130px;
+    border:none;
+    background:transparent;
+    resize:none;
+    outline:none;
+}
+
+.delete{
+    position:absolute;
+    right:10px;
+    top:10px;
+    cursor:pointer;
+    color:red;
+    font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+    <h2>📌 Ideias</h2>
+
+    <div class="menu-item" onclick="changeCategory('ideias')">
+        💡 Ideias
+    </div>
+
+    <div class="menu-item" onclick="changeCategory('tarefas')">
+        ✅ Tarefas
+    </div>
+
+    <div class="menu-item" onclick="changeCategory('projetos')">
+        🚀 Projetos
+    </div>
+
+    <div class="menu-item" onclick="changeCategory('estudos')">
+        📚 Estudos
+    </div>
+
+    <div class="menu-item" onclick="changeCategory('notas')">
+        📝 Notas
+    </div>
+</div>
+
+<div class="content">
+
+    <div class="topbar">
+        <h2 id="titulo">💡 Ideias</h2>
+        <button onclick="addNote()">
+            + Novo Post-it
+        </button>
+    </div>
+
+    <div id="notes" class="notes"></div>
+
+</div>
+
+<script>
+
+let currentCategory = "ideias";
+
+const data = {
+    ideias: [],
+    tarefas: [],
+    projetos: [],
+    estudos: [],
+    notas: []
+};
+
+function render(){
+    const container = document.getElementById("notes");
+    container.innerHTML = "";
+
+    data[currentCategory].forEach((text,index)=>{
+
+        const note = document.createElement("div");
+        note.className = "note";
+
+        note.innerHTML = `
+            <span class="delete" onclick="deleteNote(${index})">×</span>
+            <textarea
+                onchange="updateNote(${index}, this.value)"
+            >${text}</textarea>
+        `;
+
+        container.appendChild(note);
+    });
+}
+
+function addNote(){
+    data[currentCategory].push("");
+    render();
+}
+
+function deleteNote(index){
+    data[currentCategory].splice(index,1);
+    render();
+}
+
+function updateNote(index,value){
+    data[currentCategory][index]=value;
+}
+
+function changeCategory(category){
+
+    currentCategory = category;
+
+    const names = {
+        ideias:"💡 Ideias",
+        tarefas:"✅ Tarefas",
+        projetos:"🚀 Projetos",
+        estudos:"📚 Estudos",
+        notas:"📝 Notas"
+    };
+
+    document.getElementById("titulo").innerText = names[category];
+
+    render();
+}
+
+render();
+
+</script>
+
+</body>
+</html>
